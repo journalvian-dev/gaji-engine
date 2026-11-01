@@ -1,0 +1,18 @@
+# Keep line endings predictable across machines.
+#
+# Without this, a Windows checkout rewrites shell scripts to CRLF and the Maven
+# wrapper stops working on Linux/macOS CI — which is exactly how the wrapper
+# gets committed in a state nobody can run.
+* text=auto eol=lf
+
+# Windows batch files must stay CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# The wrapper script is executed directly, so it must be LF.
+mvnw text eol=lf
+mvnw.cmd text eol=crlf
+
+*.jar binary
+*.png binary
+*.jpg binary

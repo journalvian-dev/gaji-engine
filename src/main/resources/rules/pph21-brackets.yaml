@@ -1,0 +1,30 @@
+# PPh 21 progressive brackets — Pasal 17 ayat (1) huruf a
+#
+# Source : UU 7/2021 (HPP), amending UU 36/2008
+# Status : effective 1 January 2022. Unchanged since.
+#
+# `upTo` is the cumulative annual ceiling of the bracket (inclusive).
+# The final bracket is unbounded and uses `upTo: null`.
+# Rates apply to Penghasilan Kena Pajak (PKP), i.e. after PTKP is deducted.
+#
+# Dates are quoted so they are loaded as strings, not as java.util.Date.
+
+- from: '2022-01-01'
+  to: null
+  source: 'UU 7/2021 (HPP) — Pasal 17'
+  brackets:
+    - upTo: 60000000        # 0 – 60 jt
+      rate: 0.05
+    - upTo: 250000000       # 60 – 250 jt
+      rate: 0.15
+    - upTo: 500000000       # 250 – 500 jt
+      rate: 0.25
+    - upTo: 5000000000      # 500 jt – 5 M
+      rate: 0.30
+    - upTo: null            # > 5 M
+      rate: 0.35
+
+# Historical note (not encoded — out of scope):
+# Before 2022 (UU 36/2008) the first bracket ended at Rp 50.000.000 and there were
+# four brackets, with no 35% layer. Supporting 2021 or earlier means adding an
+# entry here, not changing code.

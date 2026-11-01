@@ -1,0 +1,87 @@
+# BPJS deductions for employees (potongan pekerja)
+#
+# Only employee-borne contributions are encoded here: these are the ones that
+# reduce take-home pay. Employer portions (JKK, JKM, and the employer share of
+# JHT / JP / Kesehatan) affect cost-to-company, which is out of scope for now.
+#
+# Interval convention: half-open [from, to). `to: null` means "still in force".
+# Dates are quoted so they are loaded as strings, not as java.util.Date.
+
+# ---------------------------------------------------------------------------
+# BPJS Kesehatan — Perpres 59/2024 (amending Perpres 82/2018)
+# Total 5% of wage: 4% employer, 1% employee. Wage base capped.
+# ---------------------------------------------------------------------------
+- program: kesehatan
+  from: '2020-07-01'          # TODO verify exact effective date of the Rp12 jt cap
+  to: null
+  source: 'Perpres 59/2024 — Pasal 32'
+  rate:
+    employer: 0.04
+    employee: 0.01
+  wageCap: 12000000           # confirmed unchanged for 2023–2026
+
+# ---------------------------------------------------------------------------
+# JHT — Jaminan Hari Tua (lump sum, withdrawable)
+# PP 46/2015. Total 5.7%: 3.7% employer, 2% employee. No wage cap.
+# ---------------------------------------------------------------------------
+- program: jht
+  from: '2015-07-01'
+  to: null
+  source: 'PP 46/2015'
+  rate:
+    employer: 0.037
+    employee: 0.02
+  wageCap: null
+
+# ---------------------------------------------------------------------------
+# JP — Jaminan Pensiun (monthly pension)
+#
+# PP 45/2015 Art. 29(3): the wage cap is recalculated every year as
+#     new cap = previous cap x (1 + previous year's GDP growth)
+# and it takes effect in MARCH, not January. This is the trap most calculators
+# fall into: January and April of the same year give different correct answers.
+# ---------------------------------------------------------------------------
+- program: jp
+  from: '2022-03-01'
+  to: '2023-03-01'
+  source: 'Surat Edaran BPJS Ketenagakerjaan (2022)'
+  rate:
+    employer: 0.02
+    employee: 0.01
+  wageCap: 9077600
+
+- program: jp
+  from: '2023-03-01'
+  to: '2024-03-01'
+  source: 'Surat Edaran BPJS Ketenagakerjaan (2023)'
+  rate:
+    employer: 0.02
+    employee: 0.01
+  wageCap: 9559600
+
+- program: jp
+  from: '2024-03-01'
+  to: '2025-03-01'
+  source: 'Surat Edaran BPJS Ketenagakerjaan (2024)'
+  rate:
+    employer: 0.02
+    employee: 0.01
+  wageCap: 10042300
+
+- program: jp
+  from: '2025-03-01'
+  to: '2026-03-01'
+  source: 'Surat Edaran BPJS Ketenagakerjaan (2025)'
+  rate:
+    employer: 0.02
+    employee: 0.01
+  wageCap: 10547400
+
+- program: jp
+  from: '2026-03-01'
+  to: null
+  source: 'Surat Edaran BPJS Ketenagakerjaan (2026)'
+  rate:
+    employer: 0.02
+    employee: 0.01
+  wageCap: 11086300

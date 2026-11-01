@@ -1,0 +1,61 @@
+### gaji-engine — manual requests
+### Open this file in IntelliJ IDEA and press the green play button on any block.
+### No plugin needed: IntelliJ's built-in HTTP Client handles it.
+### Requires the app running on localhost:8080.
+
+@host = http://localhost:8080
+
+### ---------------------------------------------------------------
+### JP wage cap, January 2026 — still the 2025 figure
+### Expect wageCap 10547400, validTo 2026-03-01
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=2026-01-15
+
+### ---------------------------------------------------------------
+### JP wage cap, last day before the March change
+### Expect the SAME cap as January: 10547400
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=2026-02-28
+
+### ---------------------------------------------------------------
+### JP wage cap, April 2026 — the new figure, one day into the new rule
+### Expect wageCap 11086300, validTo null
+### Same salary, same year, different correct answer.
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=2026-04-15
+
+### ---------------------------------------------------------------
+### Same request three years earlier
+### Expect wageCap 9559600
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=2023-06-01
+
+### ---------------------------------------------------------------
+### A date with no rules at all
+### Expect HTTP 400 with code NO_RULE_FOR_DATE — refusing to guess
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=2019-05-01
+
+### ---------------------------------------------------------------
+### Malformed date
+### Expect HTTP 400 with code INVALID_PARAMETER
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/jp-cap?date=15-01-2026
+
+### ---------------------------------------------------------------
+### PTKP, married with one dependent
+### Expect amount 63000000
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ptkp?date=2026-06-01&status=K/1
+
+### ---------------------------------------------------------------
+### PTKP, single with no dependents
+### Expect amount 54000000
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ptkp?date=2026-06-01&status=TK/0
+
+### ---------------------------------------------------------------
+### PTKP with a status that does not exist
+### Expect HTTP 400 — not a silent zero
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ptkp?date=2026-06-01&status=K/9

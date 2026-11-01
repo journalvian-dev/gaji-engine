@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: gaji-engine
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.journalvian.gaji: INFO

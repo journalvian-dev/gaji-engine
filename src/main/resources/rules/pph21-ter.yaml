@@ -1,0 +1,44 @@
+# PPh 21 monthly withholding — TER (Tarif Efektif Rata-rata)
+#
+# Source : PP 58/2023 and PMK 168/2023, Lampiran
+# Status : effective 1 January 2024. Unchanged since.
+#
+# How it works
+# ------------
+# From 2024, monthly PPh 21 is no longer "annualise, apply progressive brackets,
+# divide by 12". Instead each month you look up an effective rate from a table
+# (three categories) and multiply it by that month's gross income.
+#
+# December still uses the annual progressive calculation (Pasal 17) and then
+# subtracts what was already withheld January–November. That is the annual
+# reconciliation step.
+#
+# Category is determined by PTKP status at the start of the tax year.
+
+categories:
+  A: [TK/0, TK/1, K/0]
+  B: [TK/2, TK/3, K/1, K/2]
+  C: [K/3]
+
+# TODO: paste the three TER tables from the PMK 168/2023 Lampiran.
+#
+# They are NOT included here on purpose. Each table has ~40 income brackets and
+# transcribing them from a secondary source is how wrong numbers get into a
+# payroll system. Take them from the official PMK text:
+#
+#   https://jdih.kemenkeu.go.id  ->  PMK 168/PMK.03/2023, Lampiran
+#
+# Shape each table should take:
+#
+#   - from: 2024-01-01
+#     to: null
+#     source: "PMK 168/2023 — Lampiran"
+#     tables:
+#       A:
+#         - upTo: <monthly gross ceiling, inclusive>
+#           rate: <effective rate>
+#         - ...
+#       B: [...]
+#       C: [...]
+#
+# Cross-check the result against a worked example from the PMK before trusting it.

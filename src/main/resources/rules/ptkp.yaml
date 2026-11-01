@@ -1,0 +1,22 @@
+# PTKP — Penghasilan Tidak Kena Pajak (annual, IDR)
+#
+# Source : PMK 101/PMK.010/2016, Art. 1
+# Status : unchanged since 1 January 2016. Still in force as of 2026.
+# Note   : the value depends on the taxpayer's status at the START of the tax year.
+#
+# Interval convention: half-open [from, to). `to: null` means "still in force".
+# Dates are quoted so they are loaded as strings, not as java.util.Date.
+
+- from: '2016-01-01'
+  to: null
+  source: 'PMK 101/PMK.010/2016'
+  values:
+    TK/0: 54000000
+    TK/1: 58500000
+    TK/2: 63000000
+    TK/3: 67500000
+    K/0:  58500000
+    K/1:  63000000
+    K/2:  67500000
+    K/3:  72000000
+    # K/I/* (combined spouse income) is intentionally omitted — out of scope.
