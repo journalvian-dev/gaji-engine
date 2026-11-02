@@ -75,7 +75,12 @@ public class PayrollCalculator {
         DecemberReconciliation december = null;
 
         if (isDecember) {
-            december = reconcileDecember(period, status, gross, jp);
+            // PMK 168/2023 Pasal 10(1)(b): the deductible contributions are the
+            // employee's own pension and old-age contributions — JHT and JP — paid
+            // through the employer to BPJS Ketenagakerjaan. BPJS Kesehatan is a
+            // health programme, not a pension or old-age one, so it is not deductible.
+            BigDecimal annualContributions = jht.add(jp).multiply(MONTHS_IN_YEAR);
+            december = reconcileAnnual(period, status, gross, annualContributions);
             pph21 = december.decemberTax();
             method = "ANNUAL_RECONCILIATION";
         } else {
@@ -109,34 +114,43 @@ public class PayrollCalculator {
 
     /**
      * December: recompute the whole year, then subtract what was already withheld.
+     *
+     * <p>The year's deductible contributions are a parameter rather than being
+     * derived here, because they are not always the BPJS amounts: PP 58/2023's own
+     * worked example states a pension contribution of Rp 100.000 a month, which is
+     * an input to the example rather than 1% of anything. Keeping the derivation
+     * outside lets the reconciliation arithmetic be checked against that example
+     * on its own terms.
+     *
+     * @param annualDeductibleContributions the employee's pension and old-age
+     *                                      contributions for the whole year
      */
-    private DecemberReconciliation reconcileDecember(
-            LocalDate period, String status, BigDecimal gross, BigDecimal jpThisMonth) {
+    DecemberReconciliation reconcileAnnual(
+            LocalDate period,
+            String ptkpStatus,
+            BigDecimal monthlyGross,
+            BigDecimal annualDeductibleContributions) {
 
         Pph21DeductionRule deductions = deductionRules.ruleOn(period);
 
-        BigDecimal annualGross = gross.multiply(MONTHS_IN_YEAR);
+        BigDecimal annualGross = monthlyGross.multiply(MONTHS_IN_YEAR);
 
         BigDecimal biayaJabatan = deductions.biayaJabatanOn(annualGross)
                 .setScale(0, RoundingMode.HALF_UP);
 
-        // Only the pension contribution is deductible for PPh 21. JHT is a savings
-        // programme, not a pension contribution, and is not deductible.
-        BigDecimal iuranPensiun = jpThisMonth.multiply(MONTHS_IN_YEAR);
+        BigDecimal ptkp = ptkpRules.ptkpOn(period, ptkpStatus);
 
-        BigDecimal ptkp = ptkpRules.ptkpOn(period, status);
-
-        BigDecimal neto = annualGross.subtract(biayaJabatan).subtract(iuranPensiun);
+        BigDecimal neto = annualGross.subtract(biayaJabatan).subtract(annualDeductibleContributions);
         BigDecimal pkp = deductions.roundDownPkp(neto.subtract(ptkp).max(BigDecimal.ZERO));
 
         BigDecimal annualTax = bracketsRules.taxOn(period, pkp);
-        BigDecimal withheld = withheldJanuaryToNovember(period, status, gross);
+        BigDecimal withheld = withheldJanuaryToNovember(period, ptkpStatus, monthlyGross);
         BigDecimal decemberTax = annualTax.subtract(withheld).max(BigDecimal.ZERO);
 
         return new DecemberReconciliation(
                 annualGross,
                 biayaJabatan,
-                iuranPensiun,
+                annualDeductibleContributions,
                 ptkp,
                 pkp,
                 annualTax,

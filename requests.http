@@ -108,8 +108,11 @@ Content-Type: application/json
 
 ### ---------------------------------------------------------------
 ### December 2026 — same person, same salary, annual reconciliation
-### PPh21 is 515.000, not 200.000. This matches PP 58/2023's own
-### worked example exactly. The "december" block shows every step.
+### PPh21 is 395.000, not 200.000: the year is recomputed and the
+### eleven months already withheld are subtracted.
+### iuranPensiunDanHariTua = (200.000 JHT + 100.000 JP) x 12.
+### BPJS Kesehatan is not deductible — health, not pension/old age.
+### The "december" block shows every step.
 ### ---------------------------------------------------------------
 POST {{host}}/api/v1/calculate
 Content-Type: application/json

@@ -41,8 +41,12 @@ class PayrollCalculatorTest {
     }
 
     // ------------------------------------------------------------------
-    // The worked example from PP 58/2023, reproduced end to end.
-    // Tuan R: gross Rp10.000.000/month, PTKP K/0, pension contribution Rp100.000.
+    // The worked example from PP 58/2023.
+    //
+    // The regulation states the pension contribution outright — Rp 100.000 a
+    // month for Tuan R — so it is an input to the example, not a BPJS result.
+    // January's TER figure therefore reproduces end to end, while December is
+    // checked by feeding the same input into the reconciliation.
     // ------------------------------------------------------------------
 
     @Test
@@ -58,20 +62,37 @@ class PayrollCalculatorTest {
     @Test
     @DisplayName("PP 58/2023 example, December: reconciliation yields Rp515.000")
     void officialExampleDecember() {
-        CalculationResponse result = calculate("10000000", "K/0", "2026-12-01");
+        DecemberReconciliation december = calculator.reconcileAnnual(
+                LocalDate.of(2026, 12, 1),
+                "K/0",
+                new BigDecimal("10000000"),
+                new BigDecimal("1200000")); // 12 x the stated Rp 100.000
 
-        assertThat(result.pph21Method()).isEqualTo("ANNUAL_RECONCILIATION");
-        assertThat(result.pph21()).isEqualByComparingTo("515000");
-
-        DecemberReconciliation december = result.december();
         assertThat(december.annualGross()).isEqualByComparingTo("120000000");
         assertThat(december.biayaJabatan()).isEqualByComparingTo("6000000");
-        assertThat(december.iuranPensiun()).isEqualByComparingTo("1200000");
+        assertThat(december.iuranPensiunDanHariTua()).isEqualByComparingTo("1200000");
         assertThat(december.ptkp()).isEqualByComparingTo("58500000");
         assertThat(december.pkp()).isEqualByComparingTo("54300000");
         assertThat(december.annualTax()).isEqualByComparingTo("2715000");
         assertThat(december.withheldJanuaryToNovember()).isEqualByComparingTo("2200000");
         assertThat(december.decemberTax()).isEqualByComparingTo("515000");
+    }
+
+    @Test
+    @DisplayName("December deducts both JHT and JP; BPJS Kesehatan is not deductible")
+    void decemberDeductsJhtAndJp() {
+        CalculationResponse result = calculate("10000000", "K/0", "2026-12-01");
+
+        assertThat(result.pph21Method()).isEqualTo("ANNUAL_RECONCILIATION");
+
+        DecemberReconciliation december = result.december();
+        // (200.000 JHT + 100.000 JP) x 12. Kesehatan's 100.000 is excluded:
+        // PMK 168/2023 Pasal 10(1)(b) covers pension and old-age programmes only.
+        assertThat(december.iuranPensiunDanHariTua()).isEqualByComparingTo("3600000");
+        assertThat(december.pkp()).isEqualByComparingTo("51900000");
+        assertThat(december.annualTax()).isEqualByComparingTo("2595000");
+        assertThat(result.pph21()).isEqualByComparingTo("395000");
+        assertThat(result.takeHomePay()).isEqualByComparingTo("9205000");
     }
 
     // ------------------------------------------------------------------

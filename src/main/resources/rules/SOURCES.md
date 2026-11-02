@@ -74,7 +74,7 @@ The annual figure is built in a fixed order, and each link has its own source:
 ```
 annual gross                                    (12 x monthly gross)
   - biaya jabatan      5%, max 6.000.000/year   PMK 250/PMK.03/2008
-  - iuran pensiun      employee JP, 12 months   PP 45/2015
+  - JHT + JP           employee shares, 12 mo   PMK 168/2023 Pasal 10(1)(b)
   = neto
   - PTKP               by status                PMK 101/PMK.010/2016
   = PKP, rounded down to whole thousands        UU PPh Pasal 17(4)
@@ -87,12 +87,46 @@ annual gross                                    (12 x monthly gross)
 Java constants, so a future change to them is a cited data edit rather than an
 unaccountable code change.
 
-**Open question worth resolving before this is called production-grade:** whether
-the employee's *JHT* contribution (2%) is also deductible in computing PPh 21, or
-only JP (1%). This engine deducts only JP. That reproduces the PP 58/2023 worked
-example exactly, but the example does not prove the general rule — it prints an
-"iuran pensiun" figure that happens to equal 1% of the salary. The distinction
-matters for high earners, where JHT is not capped and JP is.
+### Why JHT is deductible and BPJS Kesehatan is not
+
+PMK 168/2023 Pasal 10 ayat (1) huruf b allows a deduction for
+
+> iuran terkait program **pensiun dan hari tua**, yang terkait dengan gaji, yang
+> dibayar oleh Pegawai melalui pemberi kerja kepada: … 2. badan penyelenggara
+> Jaminan sosial ketenagakerjaan
+
+JHT is literally *Jaminan Hari Tua* — old-age — and is administered by BPJS
+Ketenagakerjaan, which point 2 names. So the employee's 2% JHT counts. JP is the
+pension half of the same phrase. Both are deducted here.
+
+BPJS Kesehatan is a health programme, not a pension or old-age one, so the
+employee's 1% does **not** reduce the tax base even though it does reduce
+take-home pay. Confusing the two is a common payroll error in both directions.
+
+An earlier version of this engine deducted only JP. That was wrong, and the
+mistake is worth recording. It was justified by the fact that doing so reproduced
+PP 58/2023's Rp 515.000 December figure exactly — but it reproduced it by
+coincidence. That example states a pension contribution of Rp 100.000 a month as
+an *input*; it never says the figure comes from BPJS, and Rp 100.000 merely
+happens to be 1% of a Rp 10.000.000 salary. A worked example only validates the
+arithmetic it actually exercises.
+
+The reconciliation is now a separate unit — `reconcileAnnual` — that takes the
+year's deductible contributions as a parameter. One test feeds it the
+regulation's own inputs and gets Rp 515.000; another runs the engine's BPJS
+derivation and gets Rp 395.000. Both are right, for different questions.
+
+## What counts as gross income
+
+PMK 168/2023 Pasal 5 ayat (3) settles an easily-missed asymmetry:
+
+- **Employer-paid JKK, JKM and BPJS Kesehatan premiums are taxable income** to the
+  employee (huruf d and e) and belong in gross.
+- **Employer-paid JHT and JP contributions are not** — they are taxed when the
+  employee eventually receives them.
+
+This engine takes `grossMonthly` as given rather than assembling it, so the caller
+owns that distinction. It is listed as a limitation in the README.
 
 ## Things that did **not** change
 

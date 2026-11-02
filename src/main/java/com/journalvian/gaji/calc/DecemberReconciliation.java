@@ -12,7 +12,8 @@ import java.math.BigDecimal;
  *
  * @param annualGross                gross income for the whole year
  * @param biayaJabatan               occupational cost: 5% of gross, capped at Rp 6.000.000/year
- * @param iuranPensiun               employee pension contribution for the year
+ * @param iuranPensiunDanHariTua     the employee's own pension and old-age contributions for the
+ *                                   year — JHT plus JP — quoting PMK 168/2023 Pasal 10(1)(b)
  * @param ptkp                       annual non-taxable threshold
  * @param pkp                        Penghasilan Kena Pajak, rounded down to whole thousands
  * @param annualTax                  PPh 21 for the year, from the Pasal 17 brackets
@@ -24,7 +25,7 @@ import java.math.BigDecimal;
 public record DecemberReconciliation(
         BigDecimal annualGross,
         BigDecimal biayaJabatan,
-        BigDecimal iuranPensiun,
+        BigDecimal iuranPensiunDanHariTua,
         BigDecimal ptkp,
         BigDecimal pkp,
         BigDecimal annualTax,

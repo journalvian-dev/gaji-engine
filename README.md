@@ -8,9 +8,13 @@ rules that were in effect on that date, not just the latest ones.
 > **Status: usable.** Rules are effective-dated, PPh 21 uses TER for
 > January–November and annual reconciliation for December, and
 > `POST /api/v1/calculate` returns an auditable payslip breakdown.
-> 68 tests. Not yet covered: THR, bonus, overtime, gross-up, annual
-> reconciliation across changing salaries, and the deductibility of the
-> employee's JHT share — see `rules/SOURCES.md`.
+> 69 tests.
+>
+> **Not yet covered:** THR, bonus, overtime and other irregular income; gross-up;
+> a year where the salary changes part way through; zakat; and assembling
+> `grossMonthly` itself — employer-paid JKK, JKM and BPJS Kesehatan premiums
+> belong in gross income, employer-paid JHT and JP do not, and that distinction
+> is currently the caller's problem.
 
 ## Why this exists
 
@@ -93,7 +97,7 @@ folder for per-year circular numbers.
 Requires Java 17. The Maven wrapper is included, so no Maven install is needed.
 
 ```bash
-./mvnw test        # 68 tests
+./mvnw test        # 69 tests
 ./mvnw spring-boot:run
 ```
 
@@ -176,29 +180,39 @@ curl -X POST localhost:8080/api/v1/calculate \
   "jht": 200000,
   "jp": 100000,
   "kesehatan": 100000,
-  "pph21": 515000,
-  "totalDeductions": 915000,
-  "takeHomePay": 9085000,
+  "pph21": 395000,
+  "totalDeductions": 795000,
+  "takeHomePay": 9205000,
   "pph21Method": "ANNUAL_RECONCILIATION",
   "december": {
     "annualGross": 120000000,
     "biayaJabatan": 6000000,
-    "iuranPensiun": 1200000,
+    "iuranPensiunDanHariTua": 3600000,
     "ptkp": 58500000,
-    "pkp": 54300000,
-    "annualTax": 2715000,
+    "pkp": 51900000,
+    "annualTax": 2595000,
     "withheldJanuaryToNovember": 2200000,
-    "decemberTax": 515000,
+    "decemberTax": 395000,
     "bracketSource": "UU 7/2021 (HPP) — Pasal 17",
     "deductionSource": "PMK 168/2023 Pasal 2 ayat (2), restating PMK 250/PMK.03/2008"
   }
 }
 ```
 
-This is the worked example printed in PP 58/2023, reproduced by the engine. The
-same employee in January pays **Rp 200.000** instead — the difference is the
-annual reconciliation, and the `december` block shows every step of it rather
-than asking you to trust the total.
+Same employee, same salary, January pays **Rp 200.000**. December pays
+**Rp 395.000**, because the year is recomputed from scratch and the eleven months
+already withheld are subtracted. The `december` block shows every step rather than
+asking you to trust the total.
+
+`iuranPensiunDanHariTua` is JHT plus JP — the employee's own pension and old-age
+contributions, which PMK 168/2023 Pasal 10(1)(b) allows as a deduction. BPJS
+Kesehatan is a health programme, so it reduces take-home pay but not the tax base.
+
+The reconciliation arithmetic is also checked against PP 58/2023's own worked
+example, which states a pension contribution of Rp 100.000 a month and arrives at
+Rp 515.000 for December. Feed those inputs in and the engine reproduces it
+exactly. See `rules/SOURCES.md` for why that number differs from the one above,
+and why the distinction matters.
 
 Every intermediate figure is exposed on purpose. A payroll number nobody can
 audit is a liability, not a feature.
