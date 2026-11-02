@@ -1,0 +1,18 @@
+# Deductions applied to annual gross income before PPh 21 is computed.
+#
+# These only matter in December, where the whole year is recomputed with the
+# progressive brackets. They live here rather than as constants in Java because
+# they are rules: a future PMK may change them, and when it does the change
+# belongs next to every other rule, not buried inside a compiled class.
+
+- from: '2024-01-01'
+  to: null
+  source: 'PMK 168/2023 Pasal 2 ayat (2), restating PMK 250/PMK.03/2008'
+  biayaJabatan:
+    # 5% of gross income, capped at Rp 6.000.000 a year (Rp 500.000 a month).
+    rate: 0.05
+    annualCap: 6000000
+  # Penghasilan Kena Pajak is rounded DOWN to whole thousands of rupiah before
+  # the brackets are applied. UU PPh Pasal 17 ayat (4).
+  pkpRoundingIncrement: 1000
+  pkpRoundingSource: 'UU PPh Pasal 17 ayat (4)'

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.TestInstance;
 import com.journalvian.gaji.rule.BpjsRules;
 import com.journalvian.gaji.rule.BracketsRules;
 import com.journalvian.gaji.rule.NoRuleForDateException;
+import com.journalvian.gaji.rule.Pph21DeductionRules;
 import com.journalvian.gaji.rule.PtkpRules;
 import com.journalvian.gaji.rule.TerRules;
 import com.journalvian.gaji.rule.YamlRuleLoader;
@@ -30,7 +31,8 @@ class PayrollCalculatorTest {
                 new BpjsRules(loader),
                 new PtkpRules(loader),
                 new TerRules(loader),
-                new BracketsRules(loader));
+                new BracketsRules(loader),
+                new Pph21DeductionRules(loader));
     }
 
     private CalculationResponse calculate(String gross, String status, String period) {
@@ -142,6 +144,22 @@ class PayrollCalculatorTest {
         CalculationResponse december = calculate("10000000", "K/0", "2026-12-01");
 
         assertThat(december.pph21()).isNotEqualByComparingTo(november.pph21());
+    }
+
+    @Test
+    @DisplayName("occupational cost is 5% until it reaches the annual ceiling")
+    void biayaJabatanIsCapped() {
+        // 72 million a year: 5% is 3.6 million, under the ceiling.
+        assertThat(calculate("6000000", "TK/0", "2026-12-01").december().biayaJabatan())
+                .isEqualByComparingTo("3600000");
+
+        // 120 million a year: 5% would be 6 million, exactly the ceiling.
+        assertThat(calculate("10000000", "K/0", "2026-12-01").december().biayaJabatan())
+                .isEqualByComparingTo("6000000");
+
+        // 240 million a year: 5% would be 12 million, clamped to 6.
+        assertThat(calculate("20000000", "K/0", "2026-12-01").december().biayaJabatan())
+                .isEqualByComparingTo("6000000");
     }
 
     @Test

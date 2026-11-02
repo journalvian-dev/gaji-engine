@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import com.journalvian.gaji.rule.BpjsRules;
 import com.journalvian.gaji.rule.BracketsRules;
+import com.journalvian.gaji.rule.Pph21DeductionRule;
+import com.journalvian.gaji.rule.Pph21DeductionRules;
 import com.journalvian.gaji.rule.PtkpRules;
 import com.journalvian.gaji.rule.TerRules;
 
@@ -34,24 +36,25 @@ import com.journalvian.gaji.rule.TerRules;
 @Component
 public class PayrollCalculator {
 
-    private static final BigDecimal BIYA_JABATAN_RATE = new BigDecimal("0.05");
-    private static final BigDecimal BIYA_JABATAN_ANNUAL_CAP = new BigDecimal("6000000");
-    private static final BigDecimal THOUSAND = new BigDecimal("1000");
+    private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
 
     private final BpjsRules bpjsRules;
     private final PtkpRules ptkpRules;
     private final TerRules terRules;
     private final BracketsRules bracketsRules;
+    private final Pph21DeductionRules deductionRules;
 
     public PayrollCalculator(
             BpjsRules bpjsRules,
             PtkpRules ptkpRules,
             TerRules terRules,
-            BracketsRules bracketsRules) {
+            BracketsRules bracketsRules,
+            Pph21DeductionRules deductionRules) {
         this.bpjsRules = bpjsRules;
         this.ptkpRules = ptkpRules;
         this.terRules = terRules;
         this.bracketsRules = bracketsRules;
+        this.deductionRules = deductionRules;
     }
 
     public CalculationResponse calculate(CalculationRequest request) {
@@ -110,22 +113,21 @@ public class PayrollCalculator {
     private DecemberReconciliation reconcileDecember(
             LocalDate period, String status, BigDecimal gross, BigDecimal jpThisMonth) {
 
-        BigDecimal annualGross = gross.multiply(BigDecimal.valueOf(12));
+        Pph21DeductionRule deductions = deductionRules.ruleOn(period);
 
-        BigDecimal biayaJabatan = annualGross.multiply(BIYA_JABATAN_RATE)
-                .min(BIYA_JABATAN_ANNUAL_CAP)
+        BigDecimal annualGross = gross.multiply(MONTHS_IN_YEAR);
+
+        BigDecimal biayaJabatan = deductions.biayaJabatanOn(annualGross)
                 .setScale(0, RoundingMode.HALF_UP);
 
         // Only the pension contribution is deductible for PPh 21. JHT is a savings
         // programme, not a pension contribution, and is not deductible.
-        BigDecimal iuranPensiun = jpThisMonth.multiply(BigDecimal.valueOf(12));
+        BigDecimal iuranPensiun = jpThisMonth.multiply(MONTHS_IN_YEAR);
 
         BigDecimal ptkp = ptkpRules.ptkpOn(period, status);
 
         BigDecimal neto = annualGross.subtract(biayaJabatan).subtract(iuranPensiun);
-        BigDecimal pkp = neto.subtract(ptkp).max(BigDecimal.ZERO);
-        // PKP is rounded down to whole thousands of rupiah.
-        pkp = pkp.divide(THOUSAND, 0, RoundingMode.DOWN).multiply(THOUSAND);
+        BigDecimal pkp = deductions.roundDownPkp(neto.subtract(ptkp).max(BigDecimal.ZERO));
 
         BigDecimal annualTax = bracketsRules.taxOn(period, pkp);
         BigDecimal withheld = withheldJanuaryToNovember(period, status, gross);
@@ -140,7 +142,8 @@ public class PayrollCalculator {
                 annualTax,
                 withheld,
                 decemberTax,
-                bracketsRules.sourceOn(period));
+                bracketsRules.sourceOn(period),
+                deductions.source());
     }
 
     /**

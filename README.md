@@ -8,8 +8,9 @@ rules that were in effect on that date, not just the latest ones.
 > **Status: usable.** Rules are effective-dated, PPh 21 uses TER for
 > January–November and annual reconciliation for December, and
 > `POST /api/v1/calculate` returns an auditable payslip breakdown.
-> 63 tests. Not yet covered: THR, bonus, overtime, gross-up, annual
-> reconciliation across changing salaries.
+> 68 tests. Not yet covered: THR, bonus, overtime, gross-up, annual
+> reconciliation across changing salaries, and the deductibility of the
+> employee's JHT share — see `rules/SOURCES.md`.
 
 ## Why this exists
 
@@ -92,7 +93,7 @@ folder for per-year circular numbers.
 Requires Java 17. The Maven wrapper is included, so no Maven install is needed.
 
 ```bash
-./mvnw test        # 63 tests
+./mvnw test        # 68 tests
 ./mvnw spring-boot:run
 ```
 
@@ -169,6 +170,8 @@ curl -X POST localhost:8080/api/v1/calculate \
 
 ```json
 {
+  "period": "2026-12-01",
+  "ptkpStatus": "K/0",
   "grossMonthly": 10000000,
   "jht": 200000,
   "jp": 100000,
@@ -185,7 +188,9 @@ curl -X POST localhost:8080/api/v1/calculate \
     "pkp": 54300000,
     "annualTax": 2715000,
     "withheldJanuaryToNovember": 2200000,
-    "decemberTax": 515000
+    "decemberTax": 515000,
+    "bracketSource": "UU 7/2021 (HPP) — Pasal 17",
+    "deductionSource": "PMK 168/2023 Pasal 2 ayat (2), restating PMK 250/PMK.03/2008"
   }
 }
 ```
@@ -208,10 +213,14 @@ src/main/java/com/journalvian/gaji/
     PtkpRules.java         # PTKP by status, effective-dated
     TerRules.java          # TER A/B/C tables + category mapping
     BracketsRules.java     # progressive Pasal 17 brackets (December reconciliation)
+    Pph21DeductionRules.java # biaya jabatan ceiling and PKP rounding
     YamlRuleLoader.java    # classpath YAML → typed entries
     RuleValues.java        # typed access with clear error messages
   calc/
     PayrollCalculator.java # gross → deductions → take-home
+    CalculationRequest.java
+    CalculationResponse.java
+    DecemberReconciliation.java
   api/
     RuleController.java    # rule lookup endpoints
     CalculationController.java

@@ -39,6 +39,8 @@ which is why the figures look uneven.
 | BPJS Kesehatan | 5% (4% + 1%), cap Rp 12.000.000 | Perpres 59/2024 |
 | JHT | 5,7% (3,7% + 2%), no cap | PP 46/2015 |
 | JP | 3% (2% + 1%), capped | PP 45/2015 |
+| Biaya jabatan | 5% of gross, max Rp 6.000.000/year (Rp 500.000/month) | PMK 250/PMK.03/2008, restated in PMK 168/2023 Pasal 2(2) |
+| PKP rounding | rounded **down** to whole thousands of rupiah | UU PPh Pasal 17 ayat (4) |
 
 ## TER tables — how they were transcribed
 
@@ -64,6 +66,33 @@ TER is **not** derivable from a formula. It is a simplification that deliberatel
 rounds away the exact annualised result — that is why December needs a separate
 annual reconciliation. Anyone generating these tables from the bracket maths will
 produce numbers that look plausible and are wrong.
+
+## The December reconciliation chain
+
+The annual figure is built in a fixed order, and each link has its own source:
+
+```
+annual gross                                    (12 x monthly gross)
+  - biaya jabatan      5%, max 6.000.000/year   PMK 250/PMK.03/2008
+  - iuran pensiun      employee JP, 12 months   PP 45/2015
+  = neto
+  - PTKP               by status                PMK 101/PMK.010/2016
+  = PKP, rounded down to whole thousands        UU PPh Pasal 17(4)
+  -> brackets                                    UU 7/2021
+  - already withheld Jan-Nov                     PP 58/2023
+  = December PPh 21, floored at zero
+```
+
+`pph21-deductions.yaml` holds the biaya jabatan and rounding figures rather than
+Java constants, so a future change to them is a cited data edit rather than an
+unaccountable code change.
+
+**Open question worth resolving before this is called production-grade:** whether
+the employee's *JHT* contribution (2%) is also deductible in computing PPh 21, or
+only JP (1%). This engine deducts only JP. That reproduces the PP 58/2023 worked
+example exactly, but the example does not prove the general rule — it prints an
+"iuran pensiun" figure that happens to equal 1% of the salary. The distinction
+matters for high earners, where JHT is not capped and JP is.
 
 ## Things that did **not** change
 

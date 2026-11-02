@@ -18,7 +18,8 @@ import java.math.BigDecimal;
  * @param annualTax                  PPh 21 for the year, from the Pasal 17 brackets
  * @param withheldJanuaryToNovember  sum of TER withholding for the first eleven months
  * @param decemberTax                {@code annualTax - withheldJanuaryToNovember}, floored at zero
- * @param source                     primary source of the bracket table
+ * @param bracketSource              primary source of the bracket table
+ * @param deductionSource            primary source of the occupational cost figure
  */
 public record DecemberReconciliation(
         BigDecimal annualGross,
@@ -29,5 +30,6 @@ public record DecemberReconciliation(
         BigDecimal annualTax,
         BigDecimal withheldJanuaryToNovember,
         BigDecimal decemberTax,
-        String source) {
+        String bracketSource,
+        String deductionSource) {
 }
