@@ -1,0 +1,28 @@
+$kind: http-request
+name: 'JP cap: April 2026 uses the new ceiling'
+method: GET
+url: '{{baseUrl}}/api/v1/rules/jp-cap?date=2026-04-15'
+order: 2000
+queryParams:
+  - key: date
+    value: '2026-04-15'
+    description: The same year, after the 1 March change.
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      pm.test('the cap moved to Rp 11.086.300 on 1 March 2026', () => {
+          pm.expect(body.wageCap).to.eql(11086300);
+      });
+
+      pm.test('so the employee share is Rp 110.863', () => {
+          pm.expect(body.maxEmployeeAmount).to.eql(110863);
+      });
+
+      pm.test('and the interval starts in March, not January', () => {
+          pm.expect(body.validFrom).to.eql('2026-03-01');
+      });

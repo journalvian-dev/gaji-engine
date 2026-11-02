@@ -1,0 +1,6 @@
+$kind: collection
+name: Calculation
+description: |-
+  Payslip calculation. January and December are here side by side because they
+  are computed by different methods and must not be confused.
+order: 2000

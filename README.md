@@ -1,5 +1,7 @@
 # gaji-engine
 
+[![CI](https://github.com/journalvian-dev/gaji-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/journalvian-dev/gaji-engine/actions/workflows/ci.yml)
+
 Payroll calculation engine for Indonesia.
 
 Computes take-home pay from gross salary, PTKP status, and a **date** — using the
@@ -73,7 +75,8 @@ Adding a new year is a new entry in a YAML file — not a code change.
 - Non-fixed allowances
 - Gross-up (tax borne by employer)
 - NPWP surcharge
-- Annual reconciliation at year end
+- Zakat as a deduction
+- Assembling gross income — see the status note above
 
 ## Rule sources
 
@@ -100,6 +103,34 @@ Requires Java 17. The Maven wrapper is included, so no Maven install is needed.
 ./mvnw test        # 69 tests
 ./mvnw spring-boot:run
 ```
+
+Then open **http://localhost:8080/swagger-ui.html**. The OpenAPI document is
+generated from the controllers rather than written by hand, so it cannot drift
+from the code; a snapshot is committed as `openapi.json` if you would rather read
+it without running anything.
+
+## Contract tests
+
+`requests.http` contains runnable requests with their expected outputs, for
+whichever editor you already use.
+
+The Postman collection under `postman/collections/gaji-engine/` asserts them
+instead of just listing them:
+
+```bash
+postman collection run postman/collections/gaji-engine
+```
+
+(Needs the Postman CLI; point it elsewhere with
+`--env-var baseUrl=http://localhost:8082` if you are not on port 8080.)
+
+Seven requests, 36 assertions, including the two that matter most: that January
+and December produce different PPh 21 for the same salary, and that a date with
+no rules returns `400 NO_RULE_FOR_DATE` rather than a plausible guess. Every
+expected value is taken from a regulation, not from this engine's own output — if
+a rule is mis-transcribed, the collection fails.
+
+CI runs the unit tests on every push and pull request.
 
 The two requests below are the whole point of the project. Same salary, same
 calendar year, different correct answers:
@@ -223,7 +254,7 @@ audit is a liability, not a feature.
 src/main/java/com/journalvian/gaji/
   rule/
     EffectivePeriod.java   # half-open [from, to) interval
-    BpjsRules.java         # JP caps + contribution, loaded from YAML
+    BpjsRules.java         # JHT, JP and Kesehatan, effective-dated
     PtkpRules.java         # PTKP by status, effective-dated
     TerRules.java          # TER A/B/C tables + category mapping
     BracketsRules.java     # progressive Pasal 17 brackets (December reconciliation)
@@ -239,12 +270,18 @@ src/main/java/com/journalvian/gaji/
     RuleController.java    # rule lookup endpoints
     CalculationController.java
     ApiExceptionHandler.java
+  config/
+    OpenApiConfig.java     # Swagger metadata
 src/main/resources/rules/
   ptkp.yaml                # PTKP by status (single interval, 2016 → present)
   pph21-brackets.yaml      # progressive brackets (2022 → present)
   pph21-ter.yaml           # monthly effective rate tables (2024 → present)
+  pph21-deductions.yaml    # biaya jabatan ceiling, PKP rounding
   bpjs.yaml                # rates + effective-dated caps
   SOURCES.md               # primary source per figure, per year
+postman/collections/gaji-engine/   # contract tests, one YAML file per request
+openapi.json                       # snapshot of the generated spec
+.github/workflows/ci.yml           # test on push and pull request
 ```
 
 ## Disclaimer

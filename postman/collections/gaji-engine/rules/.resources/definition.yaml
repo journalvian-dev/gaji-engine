@@ -1,0 +1,6 @@
+$kind: collection
+name: Rules
+description: |-
+  Rule lookup endpoints. These are the project's central claim - that rules are
+  dated - and they can be inspected without calculating anything.
+order: 1000

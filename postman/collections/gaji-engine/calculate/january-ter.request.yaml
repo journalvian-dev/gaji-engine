@@ -1,0 +1,51 @@
+$kind: http-request
+name: 'January: TER withholds Rp 200.000'
+method: POST
+url: '{{baseUrl}}/api/v1/calculate'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "grossMonthly": 10000000,
+      "ptkpStatus": "K/0",
+      "period": "2026-01-01"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      pm.test('a non-December month uses TER', () => {
+          pm.expect(body.pph21Method).to.eql('TER');
+      });
+
+      pm.test('PPh 21 is 2% of gross', () => {
+          pm.expect(body.pph21).to.eql(200000);
+      });
+
+      pm.test('JHT is 2% with no cap', () => {
+          pm.expect(body.jht).to.eql(200000);
+      });
+
+      pm.test('JP is 1%, below the ceiling', () => {
+          pm.expect(body.jp).to.eql(100000);
+      });
+
+      pm.test('BPJS Kesehatan is 1%, below the ceiling', () => {
+          pm.expect(body.kesehatan).to.eql(100000);
+      });
+
+      pm.test('take-home is Rp 9.400.000', () => {
+          pm.expect(body.takeHomePay).to.eql(9400000);
+      });
+
+      pm.test('there is no December block outside December', () => {
+          pm.expect(body.december).to.eql(null);
+      });

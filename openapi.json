@@ -1,0 +1,359 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "gaji-engine",
+    "description": "Indonesian payroll calculation with effective-dated rules.\n\nRules are data, not code. Every figure carries a primary source (the regulation itself, not a blog summarising it), and each rule set is stored as half-open date intervals. A date with no matching interval returns 400 NO_RULE_FOR_DATE rather than silently falling back to the nearest one â a wrong payslip is worse than an error.\n\nTwo PPh 21 methods coexist, and the month decides which applies. January to November applies the TER rate to that month's gross. December recomputes the whole year with the Pasal 17 brackets and subtracts the eleven months already withheld, exposing every intermediate figure.\n",
+    "contact": {
+      "name": "gaji-engine"
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8082",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/v1/calculate": {
+      "post": {
+        "tags": [
+          "calculation-controller"
+        ],
+        "operationId": "calculate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/ter": {
+      "get": {
+        "tags": [
+          "rule-controller"
+        ],
+        "operationId": "ter",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gross",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/ptkp": {
+      "get": {
+        "tags": [
+          "rule-controller"
+        ],
+        "operationId": "ptkp",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PtkpResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/jp-cap": {
+      "get": {
+        "tags": [
+          "rule-controller"
+        ],
+        "operationId": "jpCap",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JpCapResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CalculationRequest": {
+        "type": "object",
+        "description": "One month's payslip to compute",
+        "properties": {
+          "grossMonthly": {
+            "type": "number",
+            "description": "Gross income for the month, before any deduction. The caller assembles this: employer-paid JKK, JKM and BPJS Kesehatan premiums are taxable income and belong here, employer-paid JHT and JP are not.",
+            "example": 10000000,
+            "minimum": 0
+          },
+          "ptkpStatus": {
+            "type": "string",
+            "description": "PTKP status. K/0 is a married employee with no dependants; TK/0 is single. Determines the non-taxable threshold and which TER table applies.",
+            "enum": [
+              "TK/0",
+              "TK/1",
+              "TK/2",
+              "TK/3",
+              "K/0",
+              "K/1",
+              "K/2",
+              "K/3"
+            ],
+            "example": "K/0"
+          },
+          "period": {
+            "type": "string",
+            "format": "date",
+            "description": "The month being paid. December is computed differently from every other month: the whole year is recomputed and the eleven months already withheld are subtracted.",
+            "example": "2026-12-01"
+          }
+        },
+        "required": [
+          "grossMonthly",
+          "period",
+          "ptkpStatus"
+        ]
+      },
+      "CalculationResponse": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "format": "date"
+          },
+          "ptkpStatus": {
+            "type": "string"
+          },
+          "grossMonthly": {
+            "type": "number"
+          },
+          "jht": {
+            "type": "number"
+          },
+          "jp": {
+            "type": "number"
+          },
+          "kesehatan": {
+            "type": "number"
+          },
+          "pph21": {
+            "type": "number"
+          },
+          "totalDeductions": {
+            "type": "number"
+          },
+          "takeHomePay": {
+            "type": "number"
+          },
+          "pph21Method": {
+            "type": "string"
+          },
+          "december": {
+            "$ref": "#/components/schemas/DecemberReconciliation"
+          }
+        }
+      },
+      "DecemberReconciliation": {
+        "type": "object",
+        "properties": {
+          "annualGross": {
+            "type": "number"
+          },
+          "biayaJabatan": {
+            "type": "number"
+          },
+          "iuranPensiunDanHariTua": {
+            "type": "number"
+          },
+          "ptkp": {
+            "type": "number"
+          },
+          "pkp": {
+            "type": "number"
+          },
+          "annualTax": {
+            "type": "number"
+          },
+          "withheldJanuaryToNovember": {
+            "type": "number"
+          },
+          "decemberTax": {
+            "type": "number"
+          },
+          "bracketSource": {
+            "type": "string"
+          },
+          "deductionSource": {
+            "type": "string"
+          }
+        }
+      },
+      "TerResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "monthlyGross": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "withholding": {
+            "type": "number"
+          },
+          "layerCeiling": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "PtkpResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "JpCapResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "wageCap": {
+            "type": "number"
+          },
+          "employeeRate": {
+            "type": "number"
+          },
+          "maxEmployeeAmount": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    }
+  }
+}
