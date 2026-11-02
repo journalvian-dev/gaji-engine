@@ -5,9 +5,11 @@ Payroll calculation engine for Indonesia.
 Computes take-home pay from gross salary, PTKP status, and a **date** — using the
 rules that were in effect on that date, not just the latest ones.
 
-> **Status: in progress.** Rule loading, effective-date resolution, the TER tables
-> and PPh 21 monthly withholding all work end to end and are covered by tests.
-> The full take-home calculation is next.
+> **Status: usable.** Rules are effective-dated, PPh 21 uses TER for
+> January–November and annual reconciliation for December, and
+> `POST /api/v1/calculate` returns an auditable payslip breakdown.
+> 63 tests. Not yet covered: THR, bonus, overtime, gross-up, annual
+> reconciliation across changing salaries.
 
 ## Why this exists
 
@@ -90,7 +92,7 @@ folder for per-year circular numbers.
 Requires Java 17. The Maven wrapper is included, so no Maven install is needed.
 
 ```bash
-./mvnw test        # 44 tests
+./mvnw test        # 63 tests
 ./mvnw spring-boot:run
 ```
 
@@ -139,6 +141,7 @@ engine has no rules for returns `400 NO_RULE_FOR_DATE` rather than guessing.
 | GET | `/api/v1/rules/jp-cap?date=` | JP wage cap and employee share in force on that date |
 | GET | `/api/v1/rules/ptkp?date=&status=` | Annual PTKP threshold for a status |
 | GET | `/api/v1/rules/ter?date=&status=&gross=` | TER rate on a monthly gross, and the PPh 21 it withholds |
+| POST | `/api/v1/calculate` | One month's payslip: BPJS deductions, PPh 21, take-home |
 
 The TER lookup is checkable against the regulation itself. PP 58/2023 works
 through an example of Rp 10.000.000 monthly gross with PTKP K/0 and states the
@@ -156,6 +159,45 @@ December is deliberately not answered by this endpoint: the final month uses the
 annual progressive calculation and subtracts what was already withheld, so the
 December figure legitimately differs from the other eleven.
 
+## Calculate a payslip
+
+```bash
+curl -X POST localhost:8080/api/v1/calculate \
+  -H 'Content-Type: application/json' \
+  -d '{"grossMonthly":10000000,"ptkpStatus":"K/0","period":"2026-12-01"}'
+```
+
+```json
+{
+  "grossMonthly": 10000000,
+  "jht": 200000,
+  "jp": 100000,
+  "kesehatan": 100000,
+  "pph21": 515000,
+  "totalDeductions": 915000,
+  "takeHomePay": 9085000,
+  "pph21Method": "ANNUAL_RECONCILIATION",
+  "december": {
+    "annualGross": 120000000,
+    "biayaJabatan": 6000000,
+    "iuranPensiun": 1200000,
+    "ptkp": 58500000,
+    "pkp": 54300000,
+    "annualTax": 2715000,
+    "withheldJanuaryToNovember": 2200000,
+    "decemberTax": 515000
+  }
+}
+```
+
+This is the worked example printed in PP 58/2023, reproduced by the engine. The
+same employee in January pays **Rp 200.000** instead — the difference is the
+annual reconciliation, and the `december` block shows every step of it rather
+than asking you to trust the total.
+
+Every intermediate figure is exposed on purpose. A payroll number nobody can
+audit is a liability, not a feature.
+
 ## Layout
 
 ```
@@ -165,10 +207,14 @@ src/main/java/com/journalvian/gaji/
     BpjsRules.java         # JP caps + contribution, loaded from YAML
     PtkpRules.java         # PTKP by status, effective-dated
     TerRules.java          # TER A/B/C tables + category mapping
+    BracketsRules.java     # progressive Pasal 17 brackets (December reconciliation)
     YamlRuleLoader.java    # classpath YAML → typed entries
     RuleValues.java        # typed access with clear error messages
+  calc/
+    PayrollCalculator.java # gross → deductions → take-home
   api/
     RuleController.java    # rule lookup endpoints
+    CalculationController.java
     ApiExceptionHandler.java
 src/main/resources/rules/
   ptkp.yaml                # PTKP by status (single interval, 2016 → present)
