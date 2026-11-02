@@ -59,3 +59,31 @@ GET {{host}}/api/v1/rules/ptkp?date=2026-06-01&status=TK/0
 ### Expect HTTP 400 — not a silent zero
 ### ---------------------------------------------------------------
 GET {{host}}/api/v1/rules/ptkp?date=2026-06-01&status=K/9
+
+### ---------------------------------------------------------------
+### TER — the worked example from PP 58/2023 itself
+### Rp10.000.000 gross, PTKP K/0, table A layer 9
+### Expect category A, rate 0.02, withholding 200000
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=K/0&gross=10000000
+
+### ---------------------------------------------------------------
+### Same gross, different PTKP status — different category, different tax
+### K/3 uses table C
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=K/3&gross=10000000
+
+### ---------------------------------------------------------------
+### Income below the first layer
+### Expect rate 0 and withholding 0
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=TK/0&gross=5000000
+
+### ---------------------------------------------------------------
+### One rupiah across a layer boundary (layer 8 -> layer 9)
+### 9650000 -> 1.75%   |   9650001 -> 2.00%
+### ---------------------------------------------------------------
+GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=TK/0&gross=9650000
+
+###
+GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=TK/0&gross=9650001

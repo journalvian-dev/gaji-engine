@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.journalvian.gaji.rule.BpjsRules;
 import com.journalvian.gaji.rule.PtkpRules;
+import com.journalvian.gaji.rule.TerRules;
 import com.journalvian.gaji.rule.YamlRuleLoader;
 
 class RuleControllerTest {
@@ -23,7 +24,8 @@ class RuleControllerTest {
         YamlRuleLoader loader = new YamlRuleLoader();
         RuleController controller = new RuleController(
                 new BpjsRules(loader),
-                new PtkpRules(loader));
+                new PtkpRules(loader),
+                new TerRules(loader));
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
@@ -86,5 +88,29 @@ class RuleControllerTest {
                         .param("status", "K/9"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    @DisplayName("the worked example from PP 58/2023: Rp10.000.000, K/0, table A layer 9")
+    void terMatchesTheOfficialExample() throws Exception {
+        mockMvc.perform(get("/api/v1/rules/ter")
+                        .param("date", "2026-06-01")
+                        .param("status", "K/0")
+                        .param("gross", "10000000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.category").value("A"))
+                .andExpect(jsonPath("$.rate").value(0.02))
+                .andExpect(jsonPath("$.withholding").value(200000))
+                .andExpect(jsonPath("$.layerCeiling").value(10050000));
+    }
+
+    @Test
+    @DisplayName("a negative gross is rejected")
+    void negativeGrossIsClientError() throws Exception {
+        mockMvc.perform(get("/api/v1/rules/ter")
+                        .param("date", "2026-06-01")
+                        .param("status", "K/0")
+                        .param("gross", "-1"))
+                .andExpect(status().isBadRequest());
     }
 }

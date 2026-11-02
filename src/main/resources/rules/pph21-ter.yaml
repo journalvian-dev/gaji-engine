@@ -1,44 +1,185 @@
 # PPh 21 monthly withholding — TER (Tarif Efektif Rata-rata)
 #
-# Source : PP 58/2023 and PMK 168/2023, Lampiran
+# Source : PP 58/2023, Lampiran huruf A, B dan C
 # Status : effective 1 January 2024. Unchanged since.
+#
+# Transcription note
+# ------------------
+# The tables below were transcribed from the official Lampiran PP 58/2023 as
+# published by DJP (pajak.go.id). They were NOT derived from a formula, because
+# TER is not a formula: it is a simplified rate table that deliberately rounds
+# away the exact annualised result. The December reconciliation exists to
+# correct the difference.
+#
+# Sanity check performed: PP 58/2023's own worked example uses Tuan R with a
+# monthly gross of Rp10.000.000 and PTKP K/0, and states "tarif efektif 2%
+# (Tabel A baris 9)". In the table below, TER A layer 9 covers
+# Rp9.650.001–Rp10.050.000 at 2.00%. Matches.
 #
 # How it works
 # ------------
-# From 2024, monthly PPh 21 is no longer "annualise, apply progressive brackets,
-# divide by 12". Instead each month you look up an effective rate from a table
-# (three categories) and multiply it by that month's gross income.
+# For months January–November, PPh 21 = monthly gross x TER rate for the
+# employee's category.
 #
-# December still uses the annual progressive calculation (Pasal 17) and then
-# subtracts what was already withheld January–November. That is the annual
-# reconciliation step.
+# December is different: the annual progressive calculation (Pasal 17) is
+# applied to the full year, then the amount already withheld in January–November
+# is subtracted. That is the annual reconciliation step, and it is why the
+# December figure is usually not equal to the other eleven months.
 #
 # Category is determined by PTKP status at the start of the tax year.
+#
+# `upTo` is the inclusive ceiling of the layer, in rupiah of monthly gross.
+# The final layer of each table is unbounded, expressed as `upTo: null`.
+#
+# Dates are quoted so they are loaded as strings, not as java.util.Date.
 
-categories:
-  A: [TK/0, TK/1, K/0]
-  B: [TK/2, TK/3, K/1, K/2]
-  C: [K/3]
+- from: '2024-01-01'
+  to: null
+  source: 'PP 58/2023 — Lampiran huruf A, B dan C'
+  categories:
 
-# TODO: paste the three TER tables from the PMK 168/2023 Lampiran.
-#
-# They are NOT included here on purpose. Each table has ~40 income brackets and
-# transcribing them from a secondary source is how wrong numbers get into a
-# payroll system. Take them from the official PMK text:
-#
-#   https://jdih.kemenkeu.go.id  ->  PMK 168/PMK.03/2023, Lampiran
-#
-# Shape each table should take:
-#
-#   - from: 2024-01-01
-#     to: null
-#     source: "PMK 168/2023 — Lampiran"
-#     tables:
-#       A:
-#         - upTo: <monthly gross ceiling, inclusive>
-#           rate: <effective rate>
-#         - ...
-#       B: [...]
-#       C: [...]
-#
-# Cross-check the result against a worked example from the PMK before trusting it.
+    # ------------------------------------------------------------------
+    # TER A — PTKP TK/0 (54 jt), TK/1 dan K/0 (58,5 jt) — 44 layers
+    # ------------------------------------------------------------------
+    A:
+      statuses: [TK/0, TK/1, K/0]
+      layers:
+        - { upTo: 5400000,     rate: 0.0000 }   #  1  s.d. 5.400.000
+        - { upTo: 5650000,     rate: 0.0025 }   #  2  5.400.001 s.d. 5.650.000
+        - { upTo: 5950000,     rate: 0.0050 }   #  3  5.650.001 s.d. 5.950.000
+        - { upTo: 6300000,     rate: 0.0075 }   #  4  5.950.001 s.d. 6.300.000
+        - { upTo: 6750000,     rate: 0.0100 }   #  5  6.300.001 s.d. 6.750.000
+        - { upTo: 7500000,     rate: 0.0125 }   #  6  6.750.001 s.d. 7.500.000
+        - { upTo: 8550000,     rate: 0.0150 }   #  7  7.500.001 s.d. 8.550.000
+        - { upTo: 9650000,     rate: 0.0175 }   #  8  8.550.001 s.d. 9.650.000
+        - { upTo: 10050000,    rate: 0.0200 }   #  9  9.650.001 s.d. 10.050.000
+        - { upTo: 10350000,    rate: 0.0225 }   # 10  10.050.001 s.d. 10.350.000
+        - { upTo: 10700000,    rate: 0.0250 }   # 11  10.350.001 s.d. 10.700.000
+        - { upTo: 11050000,    rate: 0.0300 }   # 12  10.700.001 s.d. 11.050.000
+        - { upTo: 11600000,    rate: 0.0350 }   # 13  11.050.001 s.d. 11.600.000
+        - { upTo: 12500000,    rate: 0.0400 }   # 14  11.600.001 s.d. 12.500.000
+        - { upTo: 13750000,    rate: 0.0500 }   # 15  12.500.001 s.d. 13.750.000
+        - { upTo: 15100000,    rate: 0.0600 }   # 16  13.750.001 s.d. 15.100.000
+        - { upTo: 16950000,    rate: 0.0700 }   # 17  15.100.001 s.d. 16.950.000
+        - { upTo: 19750000,    rate: 0.0800 }   # 18  16.950.001 s.d. 19.750.000
+        - { upTo: 24150000,    rate: 0.0900 }   # 19  19.750.001 s.d. 24.150.000
+        - { upTo: 26450000,    rate: 0.1000 }   # 20  24.150.001 s.d. 26.450.000
+        - { upTo: 28000000,    rate: 0.1100 }   # 21  26.450.001 s.d. 28.000.000
+        - { upTo: 30050000,    rate: 0.1200 }   # 22  28.000.001 s.d. 30.050.000
+        - { upTo: 32400000,    rate: 0.1300 }   # 23  30.050.001 s.d. 32.400.000
+        - { upTo: 35400000,    rate: 0.1400 }   # 24  32.400.001 s.d. 35.400.000
+        - { upTo: 39100000,    rate: 0.1500 }   # 25  35.400.001 s.d. 39.100.000
+        - { upTo: 43850000,    rate: 0.1600 }   # 26  39.100.001 s.d. 43.850.000
+        - { upTo: 47800000,    rate: 0.1700 }   # 27  43.850.001 s.d. 47.800.000
+        - { upTo: 51400000,    rate: 0.1800 }   # 28  47.800.001 s.d. 51.400.000
+        - { upTo: 56300000,    rate: 0.1900 }   # 29  51.400.001 s.d. 56.300.000
+        - { upTo: 62200000,    rate: 0.2000 }   # 30  56.300.001 s.d. 62.200.000
+        - { upTo: 68600000,    rate: 0.2100 }   # 31  62.200.001 s.d. 68.600.000
+        - { upTo: 77500000,    rate: 0.2200 }   # 32  68.600.001 s.d. 77.500.000
+        - { upTo: 89000000,    rate: 0.2300 }   # 33  77.500.001 s.d. 89.000.000
+        - { upTo: 103000000,   rate: 0.2400 }   # 34  89.000.001 s.d. 103.000.000
+        - { upTo: 125000000,   rate: 0.2500 }   # 35  103.000.001 s.d. 125.000.000
+        - { upTo: 157000000,   rate: 0.2600 }   # 36  125.000.001 s.d. 157.000.000
+        - { upTo: 206000000,   rate: 0.2700 }   # 37  157.000.001 s.d. 206.000.000
+        - { upTo: 337000000,   rate: 0.2800 }   # 38  206.000.001 s.d. 337.000.000
+        - { upTo: 454000000,   rate: 0.2900 }   # 39  337.000.001 s.d. 454.000.000
+        - { upTo: 550000000,   rate: 0.3000 }   # 40  454.000.001 s.d. 550.000.000
+        - { upTo: 695000000,   rate: 0.3100 }   # 41  550.000.001 s.d. 695.000.000
+        - { upTo: 910000000,   rate: 0.3200 }   # 42  695.000.001 s.d. 910.000.000
+        - { upTo: 1400000000,  rate: 0.3300 }   # 43  910.000.001 s.d. 1.400.000.000
+        - { upTo: null,        rate: 0.3400 }   # 44  lebih 1.400.000.000
+
+    # ------------------------------------------------------------------
+    # TER B — PTKP TK/2 dan K/1 (63 jt), TK/3 dan K/2 (67,5 jt) — 40 layers
+    # ------------------------------------------------------------------
+    B:
+      statuses: [TK/2, TK/3, K/1, K/2]
+      layers:
+        - { upTo: 6200000,     rate: 0.0000 }   #  1  s.d. 6.200.000
+        - { upTo: 6500000,     rate: 0.0025 }   #  2  6.200.001 s.d. 6.500.000
+        - { upTo: 6850000,     rate: 0.0050 }   #  3  6.500.001 s.d. 6.850.000
+        - { upTo: 7300000,     rate: 0.0075 }   #  4  6.850.001 s.d. 7.300.000
+        - { upTo: 9200000,     rate: 0.0100 }   #  5  7.300.001 s.d. 9.200.000
+        - { upTo: 10750000,    rate: 0.0150 }   #  6  9.200.001 s.d. 10.750.000
+        - { upTo: 11250000,    rate: 0.0200 }   #  7  10.750.001 s.d. 11.250.000
+        - { upTo: 11600000,    rate: 0.0250 }   #  8  11.250.001 s.d. 11.600.000
+        - { upTo: 12600000,    rate: 0.0300 }   #  9  11.600.001 s.d. 12.600.000
+        - { upTo: 13600000,    rate: 0.0400 }   # 10  12.600.001 s.d. 13.600.000
+        - { upTo: 14950000,    rate: 0.0500 }   # 11  13.600.001 s.d. 14.950.000
+        - { upTo: 16400000,    rate: 0.0600 }   # 12  14.950.001 s.d. 16.400.000
+        - { upTo: 18450000,    rate: 0.0700 }   # 13  16.400.001 s.d. 18.450.000
+        - { upTo: 21850000,    rate: 0.0800 }   # 14  18.450.001 s.d. 21.850.000
+        - { upTo: 26000000,    rate: 0.0900 }   # 15  21.850.001 s.d. 26.000.000
+        - { upTo: 27700000,    rate: 0.1000 }   # 16  26.000.001 s.d. 27.700.000
+        - { upTo: 29350000,    rate: 0.1100 }   # 17  27.700.001 s.d. 29.350.000
+        - { upTo: 31450000,    rate: 0.1200 }   # 18  29.350.001 s.d. 31.450.000
+        - { upTo: 33950000,    rate: 0.1300 }   # 19  31.450.001 s.d. 33.950.000
+        - { upTo: 37100000,    rate: 0.1400 }   # 20  33.950.001 s.d. 37.100.000
+        - { upTo: 41100000,    rate: 0.1500 }   # 21  37.100.001 s.d. 41.100.000
+        - { upTo: 45800000,    rate: 0.1600 }   # 22  41.100.001 s.d. 45.800.000
+        - { upTo: 49500000,    rate: 0.1700 }   # 23  45.800.001 s.d. 49.500.000
+        - { upTo: 53800000,    rate: 0.1800 }   # 24  49.500.001 s.d. 53.800.000
+        - { upTo: 58500000,    rate: 0.1900 }   # 25  53.800.001 s.d. 58.500.000
+        - { upTo: 64000000,    rate: 0.2000 }   # 26  58.500.001 s.d. 64.000.000
+        - { upTo: 71000000,    rate: 0.2100 }   # 27  64.000.001 s.d. 71.000.000
+        - { upTo: 80000000,    rate: 0.2200 }   # 28  71.000.001 s.d. 80.000.000
+        - { upTo: 93000000,    rate: 0.2300 }   # 29  80.000.001 s.d. 93.000.000
+        - { upTo: 109000000,   rate: 0.2400 }   # 30  93.000.001 s.d. 109.000.000
+        - { upTo: 129000000,   rate: 0.2500 }   # 31  109.000.001 s.d. 129.000.000
+        - { upTo: 163000000,   rate: 0.2600 }   # 32  129.000.001 s.d. 163.000.000
+        - { upTo: 211000000,   rate: 0.2700 }   # 33  163.000.001 s.d. 211.000.000
+        - { upTo: 374000000,   rate: 0.2800 }   # 34  211.000.001 s.d. 374.000.000
+        - { upTo: 459000000,   rate: 0.2900 }   # 35  374.000.001 s.d. 459.000.000
+        - { upTo: 555000000,   rate: 0.3000 }   # 36  459.000.001 s.d. 555.000.000
+        - { upTo: 704000000,   rate: 0.3100 }   # 37  555.000.001 s.d. 704.000.000
+        - { upTo: 957000000,   rate: 0.3200 }   # 38  704.000.001 s.d. 957.000.000
+        - { upTo: 1405000000,  rate: 0.3300 }   # 39  957.000.001 s.d. 1.405.000.000
+        - { upTo: null,        rate: 0.3400 }   # 40  lebih 1.405.000.000
+
+    # ------------------------------------------------------------------
+    # TER C — PTKP K/3 (72 jt) — 41 layers
+    # ------------------------------------------------------------------
+    C:
+      statuses: [K/3]
+      layers:
+        - { upTo: 6600000,     rate: 0.0000 }   #  1  s.d. 6.600.000
+        - { upTo: 6950000,     rate: 0.0025 }   #  2  6.600.001 s.d. 6.950.000
+        - { upTo: 7350000,     rate: 0.0050 }   #  3  6.950.001 s.d. 7.350.000
+        - { upTo: 7800000,     rate: 0.0075 }   #  4  7.350.001 s.d. 7.800.000
+        - { upTo: 8850000,     rate: 0.0100 }   #  5  7.800.001 s.d. 8.850.000
+        - { upTo: 9800000,     rate: 0.0125 }   #  6  8.850.001 s.d. 9.800.000
+        - { upTo: 10950000,    rate: 0.0150 }   #  7  9.800.001 s.d. 10.950.000
+        - { upTo: 11200000,    rate: 0.0175 }   #  8  10.950.001 s.d. 11.200.000
+        - { upTo: 12050000,    rate: 0.0200 }   #  9  11.200.001 s.d. 12.050.000
+        - { upTo: 12950000,    rate: 0.0300 }   # 10  12.050.001 s.d. 12.950.000
+        - { upTo: 14150000,    rate: 0.0400 }   # 11  12.950.001 s.d. 14.150.000
+        - { upTo: 15550000,    rate: 0.0500 }   # 12  14.150.001 s.d. 15.550.000
+        - { upTo: 17050000,    rate: 0.0600 }   # 13  15.550.001 s.d. 17.050.000
+        - { upTo: 19500000,    rate: 0.0700 }   # 14  17.050.001 s.d. 19.500.000
+        - { upTo: 22700000,    rate: 0.0800 }   # 15  19.500.001 s.d. 22.700.000
+        - { upTo: 26600000,    rate: 0.0900 }   # 16  22.700.001 s.d. 26.600.000
+        - { upTo: 28100000,    rate: 0.1000 }   # 17  26.600.001 s.d. 28.100.000
+        - { upTo: 30100000,    rate: 0.1100 }   # 18  28.100.001 s.d. 30.100.000
+        - { upTo: 32600000,    rate: 0.1200 }   # 19  30.100.001 s.d. 32.600.000
+        - { upTo: 35400000,    rate: 0.1300 }   # 20  32.600.001 s.d. 35.400.000
+        - { upTo: 38900000,    rate: 0.1400 }   # 21  35.400.001 s.d. 38.900.000
+        - { upTo: 43000000,    rate: 0.1500 }   # 22  38.900.001 s.d. 43.000.000
+        - { upTo: 47400000,    rate: 0.1600 }   # 23  43.000.001 s.d. 47.400.000
+        - { upTo: 51200000,    rate: 0.1700 }   # 24  47.400.001 s.d. 51.200.000
+        - { upTo: 55800000,    rate: 0.1800 }   # 25  51.200.001 s.d. 55.800.000
+        - { upTo: 60400000,    rate: 0.1900 }   # 26  55.800.001 s.d. 60.400.000
+        - { upTo: 66700000,    rate: 0.2000 }   # 27  60.400.001 s.d. 66.700.000
+        - { upTo: 74500000,    rate: 0.2100 }   # 28  66.700.001 s.d. 74.500.000
+        - { upTo: 83200000,    rate: 0.2200 }   # 29  74.500.001 s.d. 83.200.000
+        - { upTo: 95600000,    rate: 0.2300 }   # 30  83.200.001 s.d. 95.600.000
+        - { upTo: 110000000,   rate: 0.2400 }   # 31  95.600.001 s.d. 110.000.000
+        - { upTo: 134000000,   rate: 0.2500 }   # 32  110.000.001 s.d. 134.000.000
+        - { upTo: 169000000,   rate: 0.2600 }   # 33  134.000.001 s.d. 169.000.000
+        - { upTo: 221000000,   rate: 0.2700 }   # 34  169.000.001 s.d. 221.000.000
+        - { upTo: 390000000,   rate: 0.2800 }   # 35  221.000.001 s.d. 390.000.000
+        - { upTo: 463000000,   rate: 0.2900 }   # 36  390.000.001 s.d. 463.000.000
+        - { upTo: 561000000,   rate: 0.3000 }   # 37  463.000.001 s.d. 561.000.000
+        - { upTo: 709000000,   rate: 0.3100 }   # 38  561.000.001 s.d. 709.000.000
+        - { upTo: 965000000,   rate: 0.3200 }   # 39  709.000.001 s.d. 965.000.000
+        - { upTo: 1419000000,  rate: 0.3300 }   # 40  965.000.001 s.d. 1.419.000.000
+        - { upTo: null,        rate: 0.3400 }   # 41  lebih 1.419.000.000

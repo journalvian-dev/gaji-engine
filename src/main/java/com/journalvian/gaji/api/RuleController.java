@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.journalvian.gaji.rule.BpjsRules;
 import com.journalvian.gaji.rule.JpCapRule;
 import com.journalvian.gaji.rule.PtkpRules;
+import com.journalvian.gaji.rule.TerRules;
 
 /**
  * Rule lookup endpoints.
@@ -27,10 +28,12 @@ public class RuleController {
 
     private final BpjsRules bpjsRules;
     private final PtkpRules ptkpRules;
+    private final TerRules terRules;
 
-    public RuleController(BpjsRules bpjsRules, PtkpRules ptkpRules) {
+    public RuleController(BpjsRules bpjsRules, PtkpRules ptkpRules, TerRules terRules) {
         this.bpjsRules = bpjsRules;
         this.ptkpRules = ptkpRules;
+        this.terRules = terRules;
     }
 
     @GetMapping("/jp-cap")
@@ -62,5 +65,33 @@ public class RuleController {
                 status.trim().toUpperCase(),
                 ptkpRules.ptkpOn(date, status),
                 "PMK 101/PMK.010/2016");
+    }
+
+    /**
+     * The TER rate for a month, and the PPh 21 it withholds.
+     *
+     * <p>Valid for January–November. December uses the annual progressive
+     * calculation instead, so answering this request for December would be
+     * misleading — the engine still returns the monthly rate, but the caller is
+     * expected to run the annual reconciliation for the final month.
+     */
+    @GetMapping("/ter")
+    public TerResponse ter(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam String status,
+            @RequestParam BigDecimal gross) {
+
+        TerRules.Layer layer = terRules.layerOn(date, status, gross);
+        BigDecimal withholding = gross.multiply(layer.rate()).setScale(0, RoundingMode.HALF_UP);
+
+        return new TerResponse(
+                date,
+                status.trim().toUpperCase(),
+                terRules.categoryFor(status),
+                gross,
+                layer.rate(),
+                withholding,
+                layer.upTo(),
+                terRules.sourceOn(date));
     }
 }

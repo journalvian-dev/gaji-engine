@@ -40,6 +40,31 @@ which is why the figures look uneven.
 | JHT | 5,7% (3,7% + 2%), no cap | PP 46/2015 |
 | JP | 3% (2% + 1%), capped | PP 45/2015 |
 
+## TER tables — how they were transcribed
+
+The three TER tables (A: 44 layers, B: 40 layers, C: 41 layers) live in the
+**Lampiran of PP 58/2023**, not in PMK 168/2023. PMK 168/2023 is the implementing
+regulation — it explains the method and works through examples, but the layer
+tables themselves are attached to the PP.
+
+They were transcribed from the official Lampiran as published by DJP
+(`pajak.go.id`), and then verified three ways:
+
+1. **Against the regulation's own worked example.** PP 58/2023 uses Tuan R with a
+   monthly gross of Rp 10.000.000 and PTKP K/0, and states the result is
+   "tarif efektif 2% (Tabel A baris 9)". In the encoded table, TER A layer 9
+   covers Rp 9.650.001–Rp 10.050.000 at 2,00%, and the engine returns
+   Rp 200.000 for that input.
+2. **Layer counts** are asserted in tests: 44 / 40 / 41.
+3. **Structural invariants** are asserted in tests: every table is exhaustive
+   (no income falls between layers), the final layer is unbounded, and rates
+   never decrease as income rises.
+
+TER is **not** derivable from a formula. It is a simplification that deliberately
+rounds away the exact annualised result — that is why December needs a separate
+annual reconciliation. Anyone generating these tables from the bracket maths will
+produce numbers that look plausible and are wrong.
+
 ## Things that did **not** change
 
 Worth knowing, because it is easy to assume everything moves every year:

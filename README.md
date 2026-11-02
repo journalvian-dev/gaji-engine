@@ -5,8 +5,9 @@ Payroll calculation engine for Indonesia.
 Computes take-home pay from gross salary, PTKP status, and a **date** — using the
 rules that were in effect on that date, not just the latest ones.
 
-> **Status: in progress.** Rule loading and effective-date resolution work end to
-> end and are covered by tests. The pay calculation itself is next.
+> **Status: in progress.** Rule loading, effective-date resolution, the TER tables
+> and PPh 21 monthly withholding all work end to end and are covered by tests.
+> The full take-home calculation is next.
 
 ## Why this exists
 
@@ -89,7 +90,7 @@ folder for per-year circular numbers.
 Requires Java 17. The Maven wrapper is included, so no Maven install is needed.
 
 ```bash
-./mvnw test        # 24 tests
+./mvnw test        # 44 tests
 ./mvnw spring-boot:run
 ```
 
@@ -137,6 +138,23 @@ engine has no rules for returns `400 NO_RULE_FOR_DATE` rather than guessing.
 |---|---|---|
 | GET | `/api/v1/rules/jp-cap?date=` | JP wage cap and employee share in force on that date |
 | GET | `/api/v1/rules/ptkp?date=&status=` | Annual PTKP threshold for a status |
+| GET | `/api/v1/rules/ter?date=&status=&gross=` | TER rate on a monthly gross, and the PPh 21 it withholds |
+
+The TER lookup is checkable against the regulation itself. PP 58/2023 works
+through an example of Rp 10.000.000 monthly gross with PTKP K/0 and states the
+answer is 2%, "Tabel A baris 9":
+
+```bash
+curl "localhost:8080/api/v1/rules/ter?date=2026-06-01&status=K/0&gross=10000000"
+```
+
+```json
+{"category":"A","rate":0.02,"withholding":200000,"layerCeiling":10050000}
+```
+
+December is deliberately not answered by this endpoint: the final month uses the
+annual progressive calculation and subtracts what was already withheld, so the
+December figure legitimately differs from the other eleven.
 
 ## Layout
 
@@ -146,6 +164,7 @@ src/main/java/com/journalvian/gaji/
     EffectivePeriod.java   # half-open [from, to) interval
     BpjsRules.java         # JP caps + contribution, loaded from YAML
     PtkpRules.java         # PTKP by status, effective-dated
+    TerRules.java          # TER A/B/C tables + category mapping
     YamlRuleLoader.java    # classpath YAML → typed entries
     RuleValues.java        # typed access with clear error messages
   api/
