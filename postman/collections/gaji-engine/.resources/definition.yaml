@@ -1,0 +1,18 @@
+$kind: collection
+name: gaji-engine
+description: |-
+  Effective-dated Indonesian payroll rules, and the payslips computed from them.
+
+  Every assertion in this collection is a figure taken from a regulation, not a
+  copy of this engine's own output. If a rule is transcribed wrongly, these
+  fail - which is the point. The engine already has 69 unit tests; this is the
+  contract-level check that the HTTP surface still says what the code says.
+
+  Run it against a local instance:
+
+      ./mvnw spring-boot:run
+      postman collection run postman/collections/gaji-engine
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8080'
+    description: Where the application is listening.

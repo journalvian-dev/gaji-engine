@@ -1,0 +1,25 @@
+$kind: http-request
+name: 'PTKP: K/3 is unchanged since 2016'
+method: GET
+url: '{{baseUrl}}/api/v1/rules/ptkp?date=2026-01-01&status=K/3'
+order: 4000
+queryParams:
+  - key: date
+    value: '2026-01-01'
+  - key: status
+    value: 'K/3'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      pm.test('K/3 is Rp 72.000.000 - PMK 101/PMK.010/2016', () => {
+          pm.expect(body.amount).to.eql(72000000);
+      });
+
+      pm.test('the source is cited', () => {
+          pm.expect(body.source.length).to.be.above(0);
+      });

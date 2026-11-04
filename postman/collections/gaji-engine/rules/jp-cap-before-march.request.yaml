@@ -1,0 +1,33 @@
+$kind: http-request
+name: 'JP cap: January 2026 still uses the 2025 ceiling'
+method: GET
+url: '{{baseUrl}}/api/v1/rules/jp-cap?date=2026-01-15'
+order: 1000
+queryParams:
+  - key: date
+    value: '2026-01-15'
+    description: A date in January, before the March change.
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      pm.test('January is still governed by the 2025 cap of Rp 10.547.400', () => {
+          pm.expect(body.wageCap).to.eql(10547400);
+      });
+
+      pm.test('so the employee share tops out at Rp 105.474', () => {
+          pm.expect(body.maxEmployeeAmount).to.eql(105474);
+      });
+
+      pm.test('the answer names the rule interval it came from', () => {
+          pm.expect(body.validFrom).to.eql('2025-03-01');
+          pm.expect(body.validTo).to.eql('2026-03-01');
+      });
+
+      pm.test('the answer cites a source', () => {
+          pm.expect(body.source.length).to.be.above(0);
+      });

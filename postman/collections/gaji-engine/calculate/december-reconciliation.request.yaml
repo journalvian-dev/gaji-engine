@@ -1,0 +1,60 @@
+$kind: http-request
+name: 'December: the year is recomputed'
+method: POST
+url: '{{baseUrl}}/api/v1/calculate'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "grossMonthly": 10000000,
+      "ptkpStatus": "K/0",
+      "period": "2026-12-01"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+      const d = body.december;
+
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      pm.test('December uses the annual reconciliation, not TER', () => {
+          pm.expect(body.pph21Method).to.eql('ANNUAL_RECONCILIATION');
+      });
+
+      pm.test('it is not the same figure as the other eleven months', () => {
+          pm.expect(body.pph21).to.eql(395000);
+      });
+
+      pm.test('the derivation is exposed, not just the total', () => {
+          pm.expect(d.annualGross).to.eql(120000000);
+          pm.expect(d.biayaJabatan).to.eql(6000000);
+          pm.expect(d.ptkp).to.eql(58500000);
+          pm.expect(d.pkp).to.eql(51900000);
+          pm.expect(d.annualTax).to.eql(2595000);
+      });
+
+      pm.test('JHT and JP both reduce the tax base - PMK 168/2023 Pasal 10(1)(b)', () => {
+          pm.expect(d.iuranPensiunDanHariTua).to.eql(3600000);
+      });
+
+      pm.test('BPJS Kesehatan does not reduce it', () => {
+          // JHT 200.000 + JP 100.000 = 300.000 a month. Adding the 100.000
+          // Kesehatan share would make this 4.800.000.
+          pm.expect(d.iuranPensiunDanHariTua).to.not.eql(4800000);
+      });
+
+      pm.test('the eleven months already withheld are subtracted', () => {
+          pm.expect(d.withheldJanuaryToNovember).to.eql(2200000);
+          pm.expect(d.decemberTax).to.eql(d.annualTax - d.withheldJanuaryToNovember);
+      });
+
+      pm.test('both citations travel with the answer', () => {
+          pm.expect(d.bracketSource.length).to.be.above(0);
+          pm.expect(d.deductionSource.length).to.be.above(0);
+      });

@@ -1,0 +1,33 @@
+$kind: http-request
+name: 'A date with no rules is refused, not guessed'
+method: POST
+url: '{{baseUrl}}/api/v1/calculate'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "grossMonthly": 10000000,
+      "ptkpStatus": "K/0",
+      "period": "2023-06-01"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const body = pm.response.json();
+
+      pm.test('the engine refuses rather than approximating', () => {
+          pm.response.to.have.status(400);
+      });
+
+      pm.test('the error is machine-readable', () => {
+          pm.expect(body.code).to.eql('NO_RULE_FOR_DATE');
+      });
+
+      pm.test('it says which date could not be answered', () => {
+          pm.expect(body.date).to.eql('2023-06-01');
+      });

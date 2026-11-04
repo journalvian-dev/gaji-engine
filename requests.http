@@ -87,3 +87,75 @@ GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=TK/0&gross=9650000
 
 ###
 GET {{host}}/api/v1/rules/ter?date=2026-06-01&status=TK/0&gross=9650001
+
+### ===============================================================
+### CALCULATION — POST /api/v1/calculate
+### ===============================================================
+
+### ---------------------------------------------------------------
+### January 2026 — PPh 21 uses TER
+### JHT 200.000 | JP 100.000 | Kesehatan 100.000 | PPh21 200.000
+### Take home 9.400.000
+### ---------------------------------------------------------------
+POST {{host}}/api/v1/calculate
+Content-Type: application/json
+
+{
+  "grossMonthly": 10000000,
+  "ptkpStatus": "K/0",
+  "period": "2026-01-01"
+}
+
+### ---------------------------------------------------------------
+### December 2026 — same person, same salary, annual reconciliation
+### PPh21 is 395.000, not 200.000: the year is recomputed and the
+### eleven months already withheld are subtracted.
+### iuranPensiunDanHariTua = (200.000 JHT + 100.000 JP) x 12.
+### BPJS Kesehatan is not deductible — health, not pension/old age.
+### The "december" block shows every step.
+### ---------------------------------------------------------------
+POST {{host}}/api/v1/calculate
+Content-Type: application/json
+
+{
+  "grossMonthly": 10000000,
+  "ptkpStatus": "K/0",
+  "period": "2026-12-01"
+}
+
+### ---------------------------------------------------------------
+### January vs April 2026 — the March JP cap change
+### JP is 105.474 in January and 110.863 in April. Everything else
+### about the two payslips is identical.
+### ---------------------------------------------------------------
+POST {{host}}/api/v1/calculate
+Content-Type: application/json
+
+{
+  "grossMonthly": 12000000,
+  "ptkpStatus": "K/0",
+  "period": "2026-01-15"
+}
+
+###
+POST {{host}}/api/v1/calculate
+Content-Type: application/json
+
+{
+  "grossMonthly": 12000000,
+  "ptkpStatus": "K/0",
+  "period": "2026-04-15"
+}
+
+### ---------------------------------------------------------------
+### A date before TER existed
+### Expect HTTP 400 NO_RULE_FOR_DATE — the engine will not guess
+### ---------------------------------------------------------------
+POST {{host}}/api/v1/calculate
+Content-Type: application/json
+
+{
+  "grossMonthly": 10000000,
+  "ptkpStatus": "K/0",
+  "period": "2023-06-01"
+}
